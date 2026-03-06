@@ -1,0 +1,1344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>0xVOID :: Underground Exchange :: [RESTRICTED]</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #000000;
+    --deep: #030007;
+    --void: #07000f;
+    --purple-dark: #1a0030;
+    --purple-mid: #3d0070;
+    --purple-bright: #7b00cc;
+    --purple-glow: #a020f0;
+    --purple-neon: #cc44ff;
+    --purple-pale: #e8b4ff;
+    --red-alert: #cc0033;
+    --red-glow: #ff0044;
+    --green-dim: #1a4a1a;
+    --text-dim: #4a2a6a;
+    --text-mid: #8844aa;
+    --text-main: #bb88dd;
+    --text-bright: #ddb8ff;
+    --text-white: #f0e4ff;
+    --border: #2a0050;
+    --border-bright: #6600aa;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--deep);
+    color: var(--text-main);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+    min-height: 100vh;
+    cursor: crosshair;
+    overflow-x: hidden;
+  }
+
+  /* Scanline overlay */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.15) 2px,
+      rgba(0,0,0,0.15) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* CRT flicker */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.6) 100%);
+    pointer-events: none;
+    z-index: 9998;
+    animation: crt-flicker 8s infinite;
+  }
+
+  @keyframes crt-flicker {
+    0%, 97%, 100% { opacity: 1; }
+    98% { opacity: 0.92; }
+    98.5% { opacity: 1; }
+    99% { opacity: 0.88; }
+    99.5% { opacity: 1; }
+  }
+
+  /* Noise texture */
+  .noise {
+    position: fixed;
+    top: -50%; left: -50%;
+    width: 200%; height: 200%;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    opacity: 0.035;
+    pointer-events: none;
+    z-index: 9997;
+    animation: noise-drift 0.5s steps(2) infinite;
+  }
+
+  @keyframes noise-drift {
+    0% { transform: translate(0,0); }
+    25% { transform: translate(-1%, 1%); }
+    50% { transform: translate(1%, -1%); }
+    75% { transform: translate(-0.5%, 0.5%); }
+    100% { transform: translate(0,0); }
+  }
+
+  /* Warning banner */
+  .warning-bar {
+    background: repeating-linear-gradient(
+      90deg,
+      var(--red-alert) 0px, var(--red-alert) 20px,
+      #000 20px, #000 40px
+    );
+    padding: 4px 0;
+    text-align: center;
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+    color: #fff;
+    letter-spacing: 4px;
+    animation: warning-scroll 20s linear infinite;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  @keyframes warning-scroll {
+    0% { background-position: 0 0; }
+    100% { background-position: 80px 0; }
+  }
+
+  .warning-text {
+    display: inline-block;
+    animation: text-scroll 30s linear infinite;
+    padding: 0 40px;
+  }
+
+  @keyframes text-scroll {
+    0% { transform: translateX(100vw); }
+    100% { transform: translateX(-100%); }
+  }
+
+  /* Header */
+  .site-header {
+    background: linear-gradient(180deg, #000 0%, var(--void) 100%);
+    border-bottom: 2px solid var(--purple-mid);
+    padding: 16px 0 0 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .site-header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: 
+      radial-gradient(ellipse at 20% 50%, rgba(122,0,204,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 50%, rgba(122,0,204,0.06) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .header-inner {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 30px;
+  }
+
+  .logo-block {
+    flex-shrink: 0;
+  }
+
+  .logo-ascii {
+    font-family: 'VT323', monospace;
+    font-size: 52px;
+    color: var(--purple-neon);
+    text-shadow: 
+      0 0 10px var(--purple-glow),
+      0 0 30px var(--purple-mid),
+      0 0 60px rgba(122,0,204,0.3);
+    letter-spacing: 6px;
+    line-height: 1;
+    animation: logo-pulse 3s ease-in-out infinite;
+  }
+
+  @keyframes logo-pulse {
+    0%, 100% { text-shadow: 0 0 10px var(--purple-glow), 0 0 30px var(--purple-mid), 0 0 60px rgba(122,0,204,0.3); }
+    50% { text-shadow: 0 0 20px var(--purple-neon), 0 0 50px var(--purple-glow), 0 0 90px rgba(160,32,240,0.5); }
+  }
+
+  .logo-sub {
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 3px;
+    margin-top: 2px;
+  }
+
+  .header-stats {
+    flex: 1;
+    display: flex;
+    gap: 25px;
+    justify-content: flex-end;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .stat-item {
+    text-align: center;
+    border-left: 1px solid var(--border);
+    padding-left: 20px;
+  }
+
+  .stat-value {
+    font-family: 'VT323', monospace;
+    font-size: 22px;
+    color: var(--purple-neon);
+  }
+
+  .stat-label {
+    font-size: 9px;
+    color: var(--text-dim);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    display: block;
+  }
+
+  .status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #00ff88;
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+
+  .status-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: #00ff88;
+    box-shadow: 0 0 8px #00ff88;
+    animation: dot-blink 2s ease-in-out infinite;
+  }
+
+  @keyframes dot-blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* Nav */
+  .site-nav {
+    background: #000;
+    border-bottom: 1px solid var(--border);
+    max-width: 1100px;
+    margin: 12px auto 0;
+    display: flex;
+    gap: 0;
+    padding: 0 20px;
+  }
+
+  .nav-item {
+    padding: 8px 16px;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    border-right: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+  }
+
+  .nav-item:hover { color: var(--purple-neon); background: rgba(122,0,204,0.1); }
+
+  .nav-item.active {
+    color: var(--purple-neon);
+    background: rgba(122,0,204,0.15);
+  }
+
+  .nav-item.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--purple-glow);
+    box-shadow: 0 0 8px var(--purple-glow);
+  }
+
+  .nav-badge {
+    background: var(--red-alert);
+    color: #fff;
+    font-size: 9px;
+    padding: 1px 4px;
+    border-radius: 2px;
+    margin-left: 5px;
+    vertical-align: middle;
+  }
+
+  /* Layout */
+  .main-layout {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px;
+    display: grid;
+    grid-template-columns: 1fr 260px;
+    gap: 16px;
+  }
+
+  /* Section titles */
+  .section-title {
+    font-family: 'VT323', monospace;
+    font-size: 20px;
+    color: var(--purple-neon);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 10px 14px;
+    background: linear-gradient(90deg, rgba(122,0,204,0.2), transparent);
+    border-left: 3px solid var(--purple-glow);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-title::before {
+    content: '//';
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+
+  /* Panel */
+  .panel {
+    background: var(--void);
+    border: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+
+  /* Category row */
+  .cat-row {
+    display: grid;
+    grid-template-columns: 36px 1fr auto auto;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(42,0,80,0.5);
+    gap: 12px;
+    transition: background 0.2s;
+    cursor: pointer;
+  }
+
+  .cat-row:hover { background: rgba(122,0,204,0.08); }
+
+  .cat-icon {
+    font-size: 18px;
+    text-align: center;
+    filter: grayscale(0.3);
+  }
+
+  .cat-name {
+    color: var(--text-bright);
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
+
+  .cat-desc {
+    color: var(--text-dim);
+    font-size: 10px;
+    letter-spacing: 1px;
+    margin-top: 2px;
+  }
+
+  .cat-count {
+    color: var(--purple-neon);
+    font-family: 'VT323', monospace;
+    font-size: 20px;
+    text-align: right;
+    min-width: 40px;
+  }
+
+  .cat-tag {
+    font-size: 9px;
+    padding: 2px 6px;
+    border: 1px solid;
+    letter-spacing: 2px;
+  }
+
+  .tag-hot { border-color: var(--red-alert); color: var(--red-alert); }
+  .tag-new { border-color: #00aa44; color: #00aa44; }
+  .tag-inv { border-color: var(--purple-bright); color: var(--purple-bright); }
+
+  /* THE MAIN THREAD */
+  .thread-highlight {
+    border: 1px solid var(--purple-mid);
+    background: linear-gradient(135deg, rgba(26,0,48,0.9), rgba(7,0,15,0.95));
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .thread-highlight::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--purple-glow), transparent);
+    animation: scan-line 4s ease-in-out infinite;
+  }
+
+  @keyframes scan-line {
+    0%, 100% { opacity: 0; transform: translateX(-100%); }
+    50% { opacity: 1; transform: translateX(100%); }
+  }
+
+  .thread-tag-bar {
+    background: rgba(122,0,204,0.2);
+    border-bottom: 1px solid var(--border);
+    padding: 6px 14px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .thread-badge {
+    font-size: 9px;
+    padding: 2px 7px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .badge-sold {
+    background: var(--red-alert);
+    color: #fff;
+  }
+
+  .badge-verified {
+    background: transparent;
+    border: 1px solid #00aa44;
+    color: #00aa44;
+  }
+
+  .badge-pgp {
+    background: transparent;
+    border: 1px solid var(--purple-bright);
+    color: var(--purple-pale);
+  }
+
+  .thread-title-block {
+    padding: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .thread-title {
+    font-family: 'VT323', monospace;
+    font-size: 26px;
+    color: var(--text-white);
+    text-shadow: 0 0 15px rgba(160,32,240,0.4);
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
+
+  .thread-meta {
+    display: flex;
+    gap: 20px;
+    font-size: 10px;
+    color: var(--text-dim);
+    flex-wrap: wrap;
+  }
+
+  .thread-meta span { letter-spacing: 1px; }
+  .thread-meta .highlight { color: var(--purple-neon); }
+
+  /* Post body */
+  .post-body {
+    padding: 16px 14px;
+    border-bottom: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 16px;
+  }
+
+  /* Avatar column */
+  .user-col {
+    text-align: center;
+    border-right: 1px solid var(--border);
+    padding-right: 14px;
+  }
+
+  .avatar-wrap {
+    width: 64px;
+    height: 64px;
+    border: 1px solid var(--purple-mid);
+    margin: 0 auto 8px;
+    position: relative;
+    overflow: hidden;
+    background: #000;
+  }
+
+  /* THE AVATAR - looks like noise/glitch but actually stegged */
+  .avatar-wrap canvas {
+    width: 64px !important;
+    height: 64px !important;
+    display: block;
+    image-rendering: pixelated;
+  }
+
+  .avatar-wrap::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(135deg, rgba(122,0,204,0.15), transparent 50%, rgba(122,0,204,0.1));
+    pointer-events: none;
+  }
+
+  .username {
+    font-family: 'VT323', monospace;
+    font-size: 18px;
+    color: var(--purple-neon);
+    text-shadow: 0 0 8px var(--purple-glow);
+    display: block;
+  }
+
+  .user-rank {
+    font-size: 9px;
+    color: var(--red-alert);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    display: block;
+    margin-top: 2px;
+  }
+
+  .user-stats {
+    font-size: 9px;
+    color: var(--text-dim);
+    margin-top: 6px;
+    line-height: 1.8;
+    letter-spacing: 0.5px;
+  }
+
+  .rep-bar {
+    height: 3px;
+    background: var(--border);
+    margin-top: 6px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .rep-fill {
+    position: absolute;
+    top: 0; left: 0;
+    height: 100%;
+    width: 87%;
+    background: linear-gradient(90deg, var(--purple-mid), var(--purple-neon));
+    box-shadow: 0 0 6px var(--purple-glow);
+  }
+
+  /* Post content */
+  .post-content {
+    font-size: 12px;
+    color: var(--text-main);
+    line-height: 1.8;
+  }
+
+  .post-content p { margin-bottom: 12px; }
+
+  .post-content .redacted {
+    background: #111;
+    color: #111;
+    border-bottom: 1px solid var(--text-dim);
+    cursor: not-allowed;
+    transition: all 0.3s;
+    padding: 0 2px;
+    user-select: none;
+  }
+
+  .post-content .redacted:hover {
+    background: var(--purple-dark);
+    color: var(--text-dim);
+  }
+
+  .info-table {
+    border: 1px solid var(--border);
+    margin: 12px 0;
+    width: 100%;
+  }
+
+  .info-table td {
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+  }
+
+  .info-table td:first-child {
+    color: var(--text-dim);
+    width: 130px;
+    border-right: 1px solid var(--border);
+    letter-spacing: 1px;
+  }
+
+  .info-table td:last-child { color: var(--text-bright); }
+
+  .pgp-block {
+    background: #000;
+    border: 1px solid var(--border);
+    border-left: 2px solid var(--purple-mid);
+    padding: 10px 12px;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 0.5px;
+    line-height: 1.6;
+    margin: 12px 0;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .pgp-block::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 100%;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 20px,
+      rgba(122,0,204,0.02) 20px, rgba(122,0,204,0.02) 21px
+    );
+    pointer-events: none;
+  }
+
+  .pgp-header { color: var(--purple-pale); letter-spacing: 1px; margin-bottom: 6px; }
+  .pgp-footer { color: var(--purple-pale); letter-spacing: 1px; margin-top: 6px; }
+  .pgp-body { color: #4a3a5a; word-break: break-all; }
+
+  /* Proof block */
+  .proof-block {
+    background: rgba(0,170,68,0.05);
+    border: 1px solid rgba(0,170,68,0.2);
+    padding: 10px 12px;
+    margin: 10px 0;
+    font-size: 11px;
+    color: #006622;
+  }
+
+  .proof-block .proof-title {
+    color: #00aa44;
+    letter-spacing: 2px;
+    font-size: 10px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+
+  /* Replies */
+  .reply-block {
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(42,0,80,0.3);
+    display: grid;
+    grid-template-columns: 80px 1fr;
+    gap: 16px;
+    background: rgba(3,0,7,0.5);
+  }
+
+  .reply-user { text-align: center; border-right: 1px solid var(--border); padding-right: 12px; }
+
+  .reply-avatar {
+    width: 40px; height: 40px;
+    background: var(--purple-dark);
+    border: 1px solid var(--border);
+    margin: 0 auto 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'VT323', monospace;
+    font-size: 20px;
+    color: var(--purple-bright);
+  }
+
+  .reply-username {
+    font-size: 11px;
+    color: var(--text-mid);
+    display: block;
+  }
+
+  .reply-rank { font-size: 9px; color: var(--text-dim); letter-spacing: 1px; }
+
+  .reply-content {
+    font-size: 11px;
+    color: var(--text-mid);
+    line-height: 1.7;
+    padding-top: 4px;
+  }
+
+  .reply-date { font-size: 9px; color: var(--text-dim); letter-spacing: 1px; margin-bottom: 6px; }
+
+  /* Sidebar */
+  .sidebar { }
+
+  .sidebar-panel {
+    background: var(--void);
+    border: 1px solid var(--border);
+    margin-bottom: 14px;
+  }
+
+  .sidebar-title {
+    font-family: 'VT323', monospace;
+    font-size: 16px;
+    color: var(--purple-neon);
+    letter-spacing: 3px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(122,0,204,0.1);
+    text-transform: uppercase;
+  }
+
+  .online-list { padding: 8px 12px; }
+
+  .online-user {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: 11px;
+    color: var(--text-dim);
+    border-bottom: 1px solid rgba(42,0,80,0.3);
+  }
+
+  .online-user:last-child { border-bottom: none; }
+
+  .online-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .dot-green { background: #00aa44; box-shadow: 0 0 5px #00aa44; }
+  .dot-yellow { background: #aaaa00; box-shadow: 0 0 5px #aaaa00; }
+  .dot-purple { background: var(--purple-bright); box-shadow: 0 0 5px var(--purple-bright); }
+
+  .online-name { color: var(--text-main); flex: 1; }
+  .online-flag { font-size: 9px; color: var(--text-dim); }
+
+  /* Market ticker */
+  .ticker-list { padding: 10px 12px; }
+
+  .ticker-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 4px 0;
+    font-size: 10px;
+    border-bottom: 1px solid rgba(42,0,80,0.3);
+    letter-spacing: 0.5px;
+  }
+
+  .ticker-row:last-child { border-bottom: none; }
+  .ticker-name { color: var(--text-dim); }
+  .ticker-price { color: var(--text-bright); }
+  .ticker-change { font-size: 9px; }
+  .up { color: #00aa44; }
+  .down { color: var(--red-alert); }
+
+  /* Alert box */
+  .alert-box {
+    background: rgba(204,0,51,0.07);
+    border: 1px solid rgba(204,0,51,0.3);
+    border-left: 3px solid var(--red-alert);
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    font-size: 10px;
+    color: rgba(204,0,51,0.8);
+    letter-spacing: 1px;
+    line-height: 1.7;
+  }
+
+  .alert-title {
+    color: var(--red-glow);
+    letter-spacing: 2px;
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+
+  /* Pgp hash short */
+  .hash { color: var(--purple-bright); font-size: 10px; letter-spacing: 1px; }
+
+  /* Glitch text effect */
+  .glitch {
+    position: relative;
+    display: inline-block;
+  }
+
+  .glitch::before, .glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0; left: 0;
+    font-family: inherit;
+    font-size: inherit;
+  }
+
+  .glitch::before {
+    color: #ff00ff;
+    animation: glitch-before 4s infinite;
+    clip-path: polygon(0 0, 100% 0, 100% 33%, 0 33%);
+  }
+
+  .glitch::after {
+    color: #00ffff;
+    animation: glitch-after 4s infinite;
+    clip-path: polygon(0 67%, 100% 67%, 100% 100%, 0 100%);
+  }
+
+  @keyframes glitch-before {
+    0%, 90%, 100% { transform: translate(0); opacity: 0; }
+    91% { transform: translate(-2px, 1px); opacity: 0.8; }
+    93% { transform: translate(2px, -1px); opacity: 0.8; }
+    95% { transform: translate(0); opacity: 0; }
+  }
+
+  @keyframes glitch-after {
+    0%, 90%, 100% { transform: translate(0); opacity: 0; }
+    92% { transform: translate(2px, 1px); opacity: 0.8; }
+    94% { transform: translate(-2px, -1px); opacity: 0.8; }
+    96% { transform: translate(0); opacity: 0; }
+  }
+
+  /* Footer */
+  .site-footer {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  /* Cursor blink */
+  .blink {
+    animation: blink 1s step-end infinite;
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; background: #000; }
+  ::-webkit-scrollbar-thumb { background: var(--purple-mid); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--purple-bright); }
+
+  /* Pagination */
+  .pagination {
+    padding: 10px 14px;
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .page-btn {
+    padding: 3px 8px;
+    border: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  .page-btn:hover, .page-btn.active {
+    border-color: var(--purple-bright);
+    color: var(--purple-neon);
+    background: rgba(122,0,204,0.1);
+  }
+
+  .views-counter {
+    margin-left: auto;
+    font-size: 10px;
+    color: var(--text-dim);
+    letter-spacing: 1px;
+  }
+
+</style>
+</head>
+<body>
+
+<div class="noise"></div>
+
+<!-- WARNING BAR -->
+<div class="warning-bar">
+  <span class="warning-text">⚠ OPSEC REMINDER: USE TOR — DISABLE JS — NO SCREENSHOTS — CONVERSATIONS ARE MONITORED — STAY ANONYMOUS — ALL TRANSACTIONS ARE FINAL — VIOLATORS WILL BE EXPOSED ⚠ OPSEC REMINDER: USE TOR — DISABLE JS — NO SCREENSHOTS</span>
+</div>
+
+<!-- HEADER -->
+<div class="site-header">
+  <div class="header-inner">
+    <div class="logo-block">
+      <div class="logo-ascii glitch" data-text="0xVOID">0xVOID</div>
+      <div class="logo-sub">:: UNDERGROUND EXCHANGE v3.7.1 ::</div>
+    </div>
+    <div class="header-stats">
+      <div class="status-indicator">
+        <div class="status-dot"></div>
+        <span>NETWORK SECURE</span>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">14,822</div>
+        <span class="stat-label">members</span>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">3,047</div>
+        <span class="stat-label">threads</span>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">291</div>
+        <span class="stat-label">online</span>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">99.2%</div>
+        <span class="stat-label">uptime</span>
+      </div>
+    </div>
+  </div>
+  <div class="site-nav">
+    <div class="nav-item active">MARKETPLACE</div>
+    <div class="nav-item">EXPLOITS <span class="nav-badge">HOT</span></div>
+    <div class="nav-item">CREDENTIALS</div>
+    <div class="nav-item">NETWORK ACCESS</div>
+    <div class="nav-item">TOOLS</div>
+    <div class="nav-item">ESCROW</div>
+    <div class="nav-item">PGP VERIFY</div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main-layout">
+  <div class="main-col">
+
+    <!-- Alert -->
+    <div class="alert-box">
+      <div class="alert-title">⚠ SECURITY NOTICE</div>
+      DO NOT share personal information. All negotiations via PGP only.
+      Admin will NEVER ask for credentials. Report imposters immediately.
+      This thread has been archived and marked [CLOSED — DEAL COMPLETED].
+    </div>
+
+    <!-- Categories preview -->
+    <div class="panel" style="margin-bottom:16px;">
+      <div class="section-title">BOARD INDEX</div>
+      <div class="cat-row">
+        <div class="cat-icon">🔴</div>
+        <div>
+          <div class="cat-name">0DAY EXPLOITS & VULNERABILITIES</div>
+          <div class="cat-desc">Unpatched CVEs, PoC, weaponized code</div>
+        </div>
+        <div class="cat-tag tag-hot">HOT</div>
+        <div class="cat-count">847</div>
+      </div>
+      <div class="cat-row">
+        <div class="cat-icon">🟣</div>
+        <div>
+          <div class="cat-name">INITIAL ACCESS BROKERS</div>
+          <div class="cat-desc">Corporate VPN, RDP, webshells — verified</div>
+        </div>
+        <div class="cat-tag tag-inv">INVITE</div>
+        <div class="cat-count">312</div>
+      </div>
+      <div class="cat-row">
+        <div class="cat-icon">⚫</div>
+        <div>
+          <div class="cat-name">DATA & CREDENTIALS</div>
+          <div class="cat-desc">Databases, combo lists, SSN, financial</div>
+        </div>
+        <div class="cat-tag tag-new">NEW</div>
+        <div class="cat-count">1,204</div>
+      </div>
+      <div class="cat-row" style="background:rgba(122,0,204,0.06);">
+        <div class="cat-icon">🔥</div>
+        <div>
+          <div class="cat-name">PREMIUM DEALS — VERIFIED VENDORS</div>
+          <div class="cat-desc">Escrow-backed. PGP-verified sellers only.</div>
+        </div>
+        <div class="cat-tag tag-hot">FEATURED</div>
+        <div class="cat-count">89</div>
+      </div>
+    </div>
+
+    <!-- THE MAIN THREAD -->
+    <div class="thread-highlight">
+      <div class="thread-tag-bar">
+        <span class="thread-badge badge-sold">● SOLD</span>
+        <span class="thread-badge badge-verified">✔ BUYER CONFIRMED</span>
+        <span class="thread-badge badge-pgp">PGP SIGNED</span>
+      </div>
+
+      <div class="thread-title-block">
+        <div class="thread-title">[SOLD] 0day — North Africa Telecom — buyer confirmed</div>
+        <div class="thread-meta">
+          <span>SECTION: <span class="highlight">PREMIUM / 0DAY</span></span>
+          <span>POSTED: <span class="highlight">2025-03-03 // 02:17 UTC</span></span>
+          <span>BY: <span class="highlight">sp3ct3r_</span></span>
+          <span>VIEWS: <span class="highlight">3,441</span></span>
+          <span>REPLIES: <span class="highlight">7</span></span>
+        </div>
+      </div>
+
+      <!-- MAIN POST -->
+      <div class="post-body">
+
+        <!-- USER COL -->
+        <div class="user-col">
+          <div class="avatar-wrap">
+            <canvas id="avatarCanvas" width="64" height="64"></canvas>
+          </div>
+          <span class="username">sp3ct3r_</span>
+          <span class="user-rank">★ ELITE VENDOR</span>
+          <div class="user-stats">
+            posts: 412<br>
+            rep: +889 / -0<br>
+            since: 2021<br>
+            escrow: ✔<br>
+            pgp: ✔
+          </div>
+          <div class="rep-bar"><div class="rep-fill"></div></div>
+        </div>
+
+        <!-- POST CONTENT -->
+        <div class="post-content">
+          <p>
+            Deal is complete. Archiving for reputation proof.<br>
+            Buyer took delivery on <span class="highlight">2025-03-03</span>.
+            Escrow released. No disputes. Transaction closed.
+          </p>
+
+          <p style="color: var(--text-dim); font-size:11px;">
+            — original listing below, preserved for record —
+          </p>
+
+          <table class="info-table">
+            <tr>
+              <td>TARGET SECTOR</td>
+              <td>Telecom / ISP — North Africa region</td>
+            </tr>
+            <tr>
+              <td>VULN CLASS</td>
+              <td>Pre-auth RCE // <span class="redacted" title="REDACTED">CVE-2025-XXXXX</span></td>
+            </tr>
+            <tr>
+              <td>AFFECTED SYSTEMS</td>
+              <td><span class="redacted">████████ v4.1 - v4.9</span> // unpatched</td>
+            </tr>
+            <tr>
+              <td>ACCESS LEVEL</td>
+              <td>ROOT — confirmed on live target</td>
+            </tr>
+            <tr>
+              <td>PERSISTENCE</td>
+              <td>Yes — implant deployed pre-sale</td>
+            </tr>
+            <tr>
+              <td>DETECTION RATE</td>
+              <td>0/67 on <span class="redacted">private AV scan</span></td>
+            </tr>
+            <tr>
+              <td>PRICE (FINAL)</td>
+              <td><span class="redacted">██ XMR</span> — paid</td>
+            </tr>
+          </table>
+
+          <p>
+            Proof of access was delivered to buyer via encrypted channel.
+            PoC dropped on their C2. Screenshot of root shell included in
+            escrow package. Methodology will <span style="color:var(--red-alert)">NOT</span> be disclosed.
+          </p>
+
+          <div class="proof-block">
+            <div class="proof-title">✔ ESCROW CONFIRMATION</div>
+            Transaction ID: <span style="color:#00aa44;">0x8F3A...CC21</span><br>
+            Arbiter: <span style="color:#00aa44;">v0id_mod</span> // confirmed neutral<br>
+            Dispute window: expired // deal final
+          </div>
+
+          <p style="font-size:11px; color:var(--text-dim);">
+            PGP-signed statement for reputation verification.
+            Verify against my public key pinned in profile.
+          </p>
+
+          <div class="pgp-block">
+            <div class="pgp-header">-----BEGIN PGP SIGNED MESSAGE-----</div>
+            <div class="pgp-header">Hash: SHA512</div>
+            <br>
+            <div style="color:var(--text-dim); font-size:11px; line-height:1.8;">
+              I, sp3ct3r_, confirm successful delivery of the described 0day<br>
+              to buyer [REDACTED] on 2025-03-03 02:17 UTC.<br>
+              Target: North Africa Telecom infrastructure.<br>
+              Access level: root. Persistence: confirmed.<br>
+              Buyer satisfaction: confirmed via escrow release.<br>
+              This deal is closed. No further inquiries.
+            </div>
+            <br>
+            <div class="pgp-header">-----BEGIN PGP SIGNATURE-----</div>
+            <div class="pgp-body">
+              iQIzBAEBCgAdFiEE3mK9Xp2aHkT7wQs1r0vN8sKp2RoFAme<br>
+              XpL4AAoJEK9LzfLCqdka3+kP/Rq7mNvT4xLpZQs2JkHoABc<br>
+              3TvU8WxYqLsM0dFgN1pKjE5aHvT2mXsW9rQpL7yNkD3cVbM<br>
+              4hFjP2sKtR8LwXqM5nVpH0dCgT3bQsK7mNvL4xJpZRs2HkL<br>
+              oABc3TvU8WxYqLsM0dFgN1pKjE5aHvT2mXsW9rQpL7yNkD<br>
+              3cVbM4hFjP2sKtR8Lw==<br>
+              =k7Xp
+            </div>
+            <div class="pgp-header">-----END PGP SIGNATURE-----</div>
+          </div>
+
+          <p style="font-size:10px; color:var(--text-dim); margin-top: 10px;">
+            For future deals: contact via Tox or encrypted PM only.<br>
+            New listing coming Q2. Watch this space.
+          </p>
+        </div>
+      </div>
+
+      <!-- REPLIES -->
+      <div class="reply-block">
+        <div class="reply-user">
+          <div class="reply-avatar">N</div>
+          <span class="reply-username">nullbyte_x</span>
+          <span class="reply-rank">veteran</span>
+        </div>
+        <div class="reply-content">
+          <div class="reply-date">2025-03-03 // 04:52 UTC</div>
+          Solid rep as always sp3ct3r_. Clean deal, no games.
+          Vouching for this vendor. Dealt twice, zero issues.
+        </div>
+      </div>
+
+      <div class="reply-block">
+        <div class="reply-user">
+          <div class="reply-avatar">Ø</div>
+          <span class="reply-username">0xphr34k</span>
+          <span class="reply-rank">member</span>
+        </div>
+        <div class="reply-content">
+          <div class="reply-date">2025-03-03 // 09:11 UTC</div>
+          Anyone know which telecom? Trying to cross-reference with
+          another breach I'm tracking. DM if u know.
+        </div>
+      </div>
+
+      <div class="reply-block">
+        <div class="reply-user">
+          <div class="reply-avatar">V</div>
+          <span class="reply-username">v0id_mod</span>
+          <span class="reply-rank" style="color:var(--purple-neon);">★ MOD</span>
+        </div>
+        <div class="reply-content">
+          <div class="reply-date">2025-03-03 // 10:07 UTC</div>
+          <span style="color:var(--purple-bright);">[MOD]</span> Escrow confirmed closed. Thread archived.
+          Do not post target speculation in public threads. Read the rules.
+          <span style="color:var(--red-alert);">— v0id_mod</span>
+        </div>
+      </div>
+
+      <div style="padding:6px 14px 6px; display:flex; align-items:center; justify-content:space-between; border-top: 1px solid var(--border);">
+        <div class="pagination">
+          <div class="page-btn active">1</div>
+          <div class="page-btn">2</div>
+          <div class="page-btn">»</div>
+        </div>
+        <div class="views-counter">👁 3,441 views &nbsp;|&nbsp; last reply: 2025-03-05 18:44 UTC</div>
+      </div>
+
+    </div><!-- end thread-highlight -->
+
+  </div><!-- end main-col -->
+
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+
+    <div class="alert-box" style="margin-bottom:14px;">
+      <div class="alert-title">🔒 ACCESS LEVEL: RESTRICTED</div>
+      You are browsing as <span style="color:var(--purple-neon);">GUEST</span>.
+      Some content is hidden. Verify PGP to unlock full access.
+    </div>
+
+    <div class="sidebar-panel">
+      <div class="sidebar-title">// ONLINE NOW</div>
+      <div class="online-list">
+        <div class="online-user">
+          <div class="online-dot dot-green"></div>
+          <span class="online-name">v0id_mod</span>
+          <span class="online-flag">★MOD</span>
+        </div>
+        <div class="online-user">
+          <div class="online-dot dot-purple"></div>
+          <span class="online-name">n3twr4ith</span>
+          <span class="online-flag">RU</span>
+        </div>
+        <div class="online-user">
+          <div class="online-dot dot-green"></div>
+          <span class="online-name">dark_arp</span>
+          <span class="online-flag">??</span>
+        </div>
+        <div class="online-user">
+          <div class="online-dot dot-yellow"></div>
+          <span class="online-name">nullbyte_x</span>
+          <span class="online-flag">DE</span>
+        </div>
+        <div class="online-user">
+          <div class="online-dot dot-green"></div>
+          <span class="online-name">cr4wl3r99</span>
+          <span class="online-flag">??</span>
+        </div>
+        <div class="online-user">
+          <div class="online-dot dot-purple"></div>
+          <span class="online-name">m1rr0r_7</span>
+          <span class="online-flag">UA</span>
+        </div>
+        <div class="online-user" style="color:var(--text-dim); font-size:10px; border-bottom:none; padding-top:6px;">
+          +284 anonymous
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-panel">
+      <div class="sidebar-title">// XMR RATE</div>
+      <div class="ticker-list">
+        <div class="ticker-row">
+          <span class="ticker-name">XMR/USD</span>
+          <span class="ticker-price">$174.32</span>
+          <span class="ticker-change up">↑ +2.1%</span>
+        </div>
+        <div class="ticker-row">
+          <span class="ticker-name">BTC/USD</span>
+          <span class="ticker-price">$84,210</span>
+          <span class="ticker-change down">↓ -0.8%</span>
+        </div>
+        <div class="ticker-row">
+          <span class="ticker-name">ETH/USD</span>
+          <span class="ticker-price">$2,841</span>
+          <span class="ticker-change up">↑ +1.4%</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-panel">
+      <div class="sidebar-title">// RECENT SALES</div>
+      <div class="online-list">
+        <div class="online-user" style="flex-direction:column; align-items:flex-start; gap:2px;">
+          <span style="color:var(--text-bright); font-size:10px;">EU Bank — fullz dump</span>
+          <span style="color:var(--text-dim); font-size:9px;">sold 6h ago // 12 XMR</span>
+        </div>
+        <div class="online-user" style="flex-direction:column; align-items:flex-start; gap:2px;">
+          <span style="color:var(--text-bright); font-size:10px;">VPN access — Fortune 500</span>
+          <span style="color:var(--text-dim); font-size:9px;">sold 11h ago // 8 XMR</span>
+        </div>
+        <div class="online-user" style="flex-direction:column; align-items:flex-start; gap:2px;">
+          <span style="color:var(--text-bright); font-size:10px;">RCE 0day — SCADA</span>
+          <span style="color:var(--text-dim); font-size:9px;">sold 1d ago // 45 XMR</span>
+        </div>
+        <div class="online-user" style="flex-direction:column; align-items:flex-start; gap:2px;">
+          <span style="color:var(--text-bright); font-size:10px;">N.Africa Telecom [THIS]</span>
+          <span style="color:var(--purple-neon); font-size:9px;">sold 3d ago // ██ XMR</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size:9px; color:var(--text-dim); letter-spacing:1px; padding:8px 4px; line-height:1.8;">
+      This site is for educational and research purposes only.<br>
+      <span class="blink">_</span>
+    </div>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="site-footer">
+  <span>0xVOID UNDERGROUND EXCHANGE v3.7.1</span>
+  <span>SERVER: <span style="color:#00aa44;">ONLINE</span> // TOR RECOMMENDED // NO LOGS // NO RECORDS</span>
+  <span style="color:var(--text-dim);">© 0xVOID 2019–2025 // ALL RIGHTS RESERVED</span>
+</div>
+
+<script>
+// Generate the avatar — looks like noise/static but has structure hidden in it
+// It's a 64x64 canvas filled with purple/dark noise patterns
+// The actual steganography would be applied after with steghide on the exported PNG
+(function() {
+  const canvas = document.getElementById('avatarCanvas');
+  const ctx = canvas.getContext('2d');
+  const W = 64, H = 64;
+
+  // Seed-based pseudo-random for reproducibility
+  let seed = 0x5p3c73r;
+  function rand() {
+    seed ^= seed << 13;
+    seed ^= seed >> 17;
+    seed ^= seed << 5;
+    return (seed >>> 0) / 0xFFFFFFFF;
+  }
+
+  const imageData = ctx.createImageData(W, H);
+  const data = imageData.data;
+
+  // Build a noise field that looks like static but has subtle purple blobs
+  // This makes it look like a corrupted/glitched profile picture
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const i = (y * W + x) * 4;
+      const n = rand();
+      const n2 = rand();
+      const n3 = rand();
+
+      // Distance from center for vignette
+      const dx = (x - 32) / 32;
+      const dy = (y - 32) / 32;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      const vignette = Math.max(0, 1 - dist * 0.9);
+
+      // Purple noise base
+      const base = n * 40 * vignette;
+      const purpleShift = n2 * 30 * vignette;
+
+      // Occasional bright purple pixels (static look)
+      const spark = n3 > 0.97 ? 120 + n * 80 : 0;
+
+      // Some slightly lighter regions (ghost face shape — very subtle)
+      const faceGlow = (dist < 0.5 && y > 15 && y < 50) ? n2 * 15 : 0;
+
+      data[i]     = Math.min(255, Math.floor(base * 0.4 + spark * 0.6 + faceGlow * 0.2)); // R
+      data[i + 1] = Math.min(255, Math.floor(base * 0.1 + spark * 0.2));                   // G
+      data[i + 2] = Math.min(255, Math.floor(base + purpleShift + spark + faceGlow));       // B
+      data[i + 3] = 255;
+    }
+  }
+
+  ctx.putImageData(imageData, 0, 0);
+
+  // Add a very faint scan line across the face area
+  ctx.strokeStyle = 'rgba(180,80,255,0.06)';
+  ctx.lineWidth = 1;
+  for (let y = 0; y < H; y += 4) {
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(W, y);
+    ctx.stroke();
+  }
+
+  // Subtle crosshair in center (very dim — just enough to feel intentional)
+  ctx.strokeStyle = 'rgba(120,0,200,0.12)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(32, 20); ctx.lineTo(32, 44); // vertical
+  ctx.moveTo(20, 32); ctx.lineTo(44, 32); // horizontal
+  ctx.stroke();
+
+  // Tiny "eye" glints
+  ctx.fillStyle = 'rgba(180,100,255,0.35)';
+  ctx.fillRect(23, 26, 2, 2);
+  ctx.fillRect(39, 26, 2, 2);
+
+})();
+</script>
+
+</body>
+</html>

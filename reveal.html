@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PHANTOM TRACE — CASE CLOSED</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #000;
+    color: #cc44ff;
+    font-family: 'Share Tech Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    cursor: none;
+  }
+
+  /* Scanlines */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.2) 2px, rgba(0,0,0,0.2) 4px);
+    pointer-events: none;
+    z-index: 100;
+  }
+
+  /* Vignette */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.85) 100%);
+    pointer-events: none;
+    z-index: 99;
+  }
+
+  canvas#bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+  }
+
+  .terminal {
+    position: relative;
+    z-index: 10;
+    width: min(780px, 95vw);
+    padding: 0;
+    text-align: left;
+  }
+
+  /* Title bar */
+  .title-bar {
+    background: #1a0030;
+    border: 1px solid #3d0070;
+    border-bottom: none;
+    padding: 8px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    color: #6600aa;
+    letter-spacing: 2px;
+  }
+
+  .title-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .dot-r { background: #cc0033; }
+  .dot-y { background: #aaaa00; }
+  .dot-g { background: #00aa44; }
+
+  .title-text { flex: 1; text-align: center; color: #8844aa; }
+
+  /* Terminal body */
+  .term-body {
+    background: #030007;
+    border: 1px solid #2a0050;
+    padding: 36px 40px 40px;
+    min-height: 520px;
+    position: relative;
+  }
+
+  /* Each line of the reveal — hidden initially */
+  .line {
+    opacity: 0;
+    margin-bottom: 0;
+    font-size: 13px;
+    letter-spacing: 1px;
+    line-height: 1.9;
+    transition: opacity 0.1s;
+  }
+
+  .line.visible { opacity: 1; }
+
+  .prompt { color: #3d0070; }
+  .dim    { color: #4a2a6a; }
+  .mid    { color: #8844aa; }
+  .main   { color: #bb88dd; }
+  .bright { color: #ddb8ff; }
+  .white  { color: #f0e4ff; }
+  .purple { color: #cc44ff; text-shadow: 0 0 10px #a020f0; }
+  .red    { color: #cc0033; }
+  .green  { color: #00aa44; }
+
+  .spacer { height: 14px; }
+
+  /* The big flag reveal */
+  .flag-block {
+    opacity: 0;
+    margin-top: 28px;
+    padding: 20px 24px;
+    border: 1px solid #6600aa;
+    background: linear-gradient(135deg, rgba(26,0,48,0.9), rgba(0,0,0,0.95));
+    position: relative;
+    transition: opacity 0.3s;
+  }
+
+  .flag-block.visible { opacity: 1; }
+
+  .flag-block::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg, transparent, transparent 18px,
+      rgba(100,0,180,0.03) 18px, rgba(100,0,180,0.03) 19px
+    );
+    pointer-events: none;
+  }
+
+  .flag-label {
+    font-size: 10px;
+    color: #6600aa;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .flag-text {
+    font-family: 'VT323', monospace;
+    font-size: 32px;
+    color: #cc44ff;
+    text-shadow: 0 0 20px #a020f0, 0 0 50px rgba(160,32,240,0.4);
+    letter-spacing: 2px;
+    word-break: break-all;
+    animation: flag-glow 2s ease-in-out infinite;
+  }
+
+  @keyframes flag-glow {
+    0%, 100% { text-shadow: 0 0 20px #a020f0, 0 0 50px rgba(160,32,240,0.4); }
+    50%       { text-shadow: 0 0 30px #cc44ff, 0 0 80px rgba(160,32,240,0.7), 0 0 120px rgba(160,32,240,0.2); }
+  }
+
+  /* Glitch effect on the flag */
+  .flag-text {
+    position: relative;
+  }
+
+  /* The sp3ct3r reveal image */
+  .identity-reveal {
+    opacity: 0;
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 14px 18px;
+    border: 1px solid #2a0050;
+    background: rgba(7,0,15,0.8);
+    transition: opacity 0.5s;
+  }
+
+  .identity-reveal.visible { opacity: 1; }
+
+  .id-avatar {
+    width: 56px; height: 56px;
+    border: 1px solid #6600aa;
+    flex-shrink: 0;
+    background: #000;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .id-avatar canvas { width: 56px !important; height: 56px !important; display: block; }
+
+  .id-info { flex: 1; }
+  .id-name  { font-family: 'VT323', monospace; font-size: 24px; color: #cc44ff; text-shadow: 0 0 8px #a020f0; }
+  .id-line  { font-size: 10px; color: #8844aa; letter-spacing: 1.5px; margin-top: 2px; line-height: 1.8; }
+  .id-tag   { color: #00aa44; }
+
+  /* Stats row */
+  .stats-row {
+    opacity: 0;
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: #2a0050;
+    border: 1px solid #2a0050;
+    transition: opacity 0.5s;
+  }
+
+  .stats-row.visible { opacity: 1; }
+
+  .stat-cell {
+    background: #030007;
+    padding: 10px 12px;
+    text-align: center;
+  }
+
+  .stat-val  { font-family: 'VT323', monospace; font-size: 22px; color: #cc44ff; display: block; }
+  .stat-lbl  { font-size: 9px; color: #4a2a6a; letter-spacing: 2px; text-transform: uppercase; }
+
+  /* Cursor */
+  .cursor { display: inline-block; width: 8px; height: 14px; background: #cc44ff; vertical-align: middle; animation: cursor-blink 1s step-end infinite; margin-left: 2px; }
+  @keyframes cursor-blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  /* Glitch flash */
+  .glitch-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(160,32,240,0.08);
+    pointer-events: none;
+    z-index: 98;
+    opacity: 0;
+    transition: opacity 0.05s;
+  }
+
+</style>
+</head>
+<body>
+
+<canvas id="bg"></canvas>
+<div class="glitch-overlay" id="glitch"></div>
+
+<div class="terminal">
+  <div class="title-bar">
+    <div class="title-dot dot-r"></div>
+    <div class="title-dot dot-y"></div>
+    <div class="title-dot dot-g"></div>
+    <div class="title-text">phantom_trace.sh — CASE CLOSED</div>
+  </div>
+  <div class="term-body" id="termBody">
+
+    <div class="line dim"  id="l0" >[ PHANTOM TRACE // RedPhoenix CTI Division ]</div>
+    <div class="line dim"  id="l1" >[ Session: encrypted // Node: anonymous // 2025-03-03 02:17 UTC ]</div>
+    <div class="spacer"    id="s1" style="opacity:0"></div>
+    <div class="line mid"  id="l2" >> initializing case reconstruction...</div>
+    <div class="line mid"  id="l3" >> loading artefact chain...</div>
+    <div class="spacer"    id="s2" style="opacity:0"></div>
+    <div class="line green" id="l4">  ✔  STEP 1 — c2_capture.png metadata extracted</div>
+    <div class="line dim"  id="l5" >       Author: gh4z1_w4tch3s  //  Coords: 33.9716N, 6.8498W</div>
+    <div class="line green" id="l6">  ✔  STEP 2 — underground forum thread located</div>
+    <div class="line dim"  id="l7" >       Thread: [SOLD] 0day — North Africa Telecom</div>
+    <div class="line green" id="l8">  ✔  STEP 3 — avatar LSB steganography decoded</div>
+    <div class="line dim"  id="l9" >       Hidden: "operator: sp3ct3r_ / last seen: github"</div>
+    <div class="line green" id="l10">  ✔  STEP 4 — GitHub identity reconstructed</div>
+    <div class="line dim"  id="l11">       Repo: noise-tools  //  Commit: "final clean"</div>
+    <div class="line green" id="l12">  ✔  STEP 5 — encoded URL recovered from README</div>
+    <div class="line dim"  id="l13">       Destination: this page.</div>
+    <div class="spacer"    id="s3" style="opacity:0"></div>
+    <div class="line mid"  id="l14">> building threat actor profile...</div>
+    <div class="spacer"    id="s4" style="opacity:0"></div>
+    <div class="line bright" id="l15">  ┌─────────────────────────────────────────────────────┐</div>
+    <div class="line bright" id="l16">  │  THREAT ACTOR: sp3ct3r_                             │</div>
+    <div class="line bright" id="l17">  │  ORIGIN: 33.97°N 6.85°W — Rabat, Morocco            │</div>
+    <div class="line bright" id="l18">  │  ALIASES: gh4z1_w4tch3s                              │</div>
+    <div class="line bright" id="l19">  │  ACTIVITY: 2021 – present                            │</div>
+    <div class="line bright" id="l20">  └─────────────────────────────────────────────────────┘</div>
+    <div class="spacer"    id="s5" style="opacity:0"></div>
+    <div class="line mid"  id="l21">> cross-referencing with known threat actor database...</div>
+    <div class="line mid"  id="l22">> querying internal CTI registry...</div>
+    <div class="line red"  id="l23">> ANOMALY DETECTED — profile collision with known analyst</div>
+    <div class="spacer"    id="s6" style="opacity:0"></div>
+    <div class="line white" id="l24">The threat actor was never a threat actor.</div>
+    <div class="spacer"    id="s6b" style="opacity:0"></div>
+    <div class="line white" id="l25">sp3ct3r_ is the analyst who built this trap.</div>
+    <div class="line white" id="l26">The ghost was watching you the entire time.</div>
+    <div class="spacer"    id="s7" style="opacity:0"></div>
+    <div class="line purple" id="l27">You didn't hunt a threat actor.</div>
+    <div class="line purple" id="l28">You just got profiled by one.</div>
+    <div class="spacer"    id="s8" style="opacity:0"></div>
+
+    <!-- IDENTITY REVEAL -->
+    <div class="identity-reveal" id="identity">
+      <div class="id-avatar"><canvas id="idCanvas" width="56" height="56"></canvas></div>
+      <div class="id-info">
+        <div class="id-name">GHAZI // sp3ct3r_</div>
+        <div class="id-line">
+          <span class="id-tag">ROLE:</span> CTI Analyst — DataProtect / RedPhoenix ENSAO<br>
+          <span class="id-tag">SPEC:</span> Cyber Threat Intelligence · Dark Web Monitoring · OSINT<br>
+          <span class="id-tag">ORIGIN:</span> Morocco · <span class="id-tag">STATUS:</span> THE ARCHITECT
+        </div>
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-row" id="statsRow">
+      <div class="stat-cell"><span class="stat-val">5</span><span class="stat-lbl">steps survived</span></div>
+      <div class="stat-cell"><span class="stat-val">1</span><span class="stat-lbl">ghost found</span></div>
+      <div class="stat-cell"><span class="stat-val">0</span><span class="stat-lbl">hints used</span></div>
+      <div class="stat-cell"><span class="stat-val">∞</span><span class="stat-lbl">respect earned</span></div>
+    </div>
+
+    <!-- FLAG -->
+    <div class="flag-block" id="flagBlock">
+      <div class="flag-label">// FLAG — SUBMIT TO SCOREBOARD</div>
+      <div class="flag-text" id="flagText"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── Background matrix rain ────────────────────────────────────────────────
+const bgCanvas = document.getElementById('bg');
+const bgCtx = bgCanvas.getContext('2d');
+let W, H, drops;
+
+function initBg() {
+  W = bgCanvas.width  = window.innerWidth;
+  H = bgCanvas.height = window.innerHeight;
+  const cols = Math.floor(W / 20);
+  drops = Array(cols).fill(0).map(() => Math.random() * H / 14);
+}
+initBg();
+window.addEventListener('resize', initBg);
+
+const CHARS = '01アイウエオカキクケコサシスセソタチツテトナニヌネノ∑∂∇⊕⊗¬∧∨⊂⊃∈∉';
+
+function drawBg() {
+  bgCtx.fillStyle = 'rgba(0,0,0,0.04)';
+  bgCtx.fillRect(0, 0, W, H);
+  bgCtx.font = '13px Share Tech Mono, monospace';
+  drops.forEach((y, i) => {
+    const ch = CHARS[Math.floor(Math.random() * CHARS.length)];
+    const bright = Math.random() > 0.97;
+    bgCtx.fillStyle = bright ? 'rgba(180,80,255,0.9)' : 'rgba(80,0,140,0.35)';
+    bgCtx.fillText(ch, i * 20, y * 14);
+    if (y * 14 > H && Math.random() > 0.975) drops[i] = 0;
+    else drops[i] += 0.4;
+  });
+}
+setInterval(drawBg, 50);
+
+// ── Avatar canvas (same noise as forum) ─────────────────────────────────
+function drawAvatar(canvas) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  let seed = 0x5F3A9C2E;
+  function rand() {
+    seed ^= seed << 13; seed ^= seed >> 17; seed ^= seed << 5;
+    return (seed >>> 0) / 0xFFFFFFFF;
+  }
+  const id = ctx.createImageData(W, H);
+  const d  = id.data;
+  for (let y = 0; y < H; y++) {
+    for (let x = 0; x < W; x++) {
+      const i = (y * W + x) * 4;
+      const dx = (x-W/2)/(W/2), dy = (y-H/2)/(H/2);
+      const dist = Math.sqrt(dx*dx+dy*dy);
+      const v = Math.max(0,1-dist*0.9);
+      const n=rand(), n2=rand(), n3=rand();
+      const spark = n3>0.97 ? 120+n*80 : 0;
+      const base=n*40*v, purp=n2*30*v;
+      const face=(dist<0.5&&y>H*0.23&&y<H*0.78)?n2*15:0;
+      d[i]   = Math.min(255,base*0.4+spark*0.6+face*0.2);
+      d[i+1] = Math.min(255,base*0.1+spark*0.2);
+      d[i+2] = Math.min(255,base+purp+spark+face);
+      d[i+3] = 255;
+    }
+  }
+  ctx.putImageData(id, 0, 0);
+  ctx.strokeStyle='rgba(180,80,255,0.12)'; ctx.lineWidth=1;
+  const cx=W/2,cy=H/2;
+  ctx.beginPath(); ctx.moveTo(cx,cy-W*0.28); ctx.lineTo(cx,cy+W*0.28);
+  ctx.moveTo(cx-W*0.28,cy); ctx.lineTo(cx+W*0.28,cy); ctx.stroke();
+  ctx.fillStyle='rgba(180,100,255,0.4)';
+  ctx.fillRect(Math.floor(cx*0.72), Math.floor(cy*0.81), 2, 2);
+  ctx.fillRect(Math.floor(cx*1.22), Math.floor(cy*0.81), 2, 2);
+}
+
+drawAvatar(document.getElementById('idCanvas'));
+
+// ── Typewriter reveal sequence ────────────────────────────────────────────
+const FLAG = 'RPCTF{th3_hunt3r_b3cam3_th3_hunt3d_gh4z1}';
+
+const sequence = [
+  { id: 'l0',       delay: 400  },
+  { id: 'l1',       delay: 200  },
+  { id: 's1',       delay: 300  },
+  { id: 'l2',       delay: 200  },
+  { id: 'l3',       delay: 600  },
+  { id: 's2',       delay: 200  },
+  { id: 'l4',       delay: 300  },
+  { id: 'l5',       delay: 150  },
+  { id: 'l6',       delay: 300  },
+  { id: 'l7',       delay: 150  },
+  { id: 'l8',       delay: 300  },
+  { id: 'l9',       delay: 150  },
+  { id: 'l10',      delay: 300  },
+  { id: 'l11',      delay: 150  },
+  { id: 'l12',      delay: 300  },
+  { id: 'l13',      delay: 150  },
+  { id: 's3',       delay: 400  },
+  { id: 'l14',      delay: 800  },
+  { id: 's4',       delay: 300  },
+  { id: 'l15',      delay: 120  },
+  { id: 'l16',      delay: 120  },
+  { id: 'l17',      delay: 120  },
+  { id: 'l18',      delay: 120  },
+  { id: 'l19',      delay: 120  },
+  { id: 'l20',      delay: 300  },
+  { id: 's5',       delay: 300  },
+  { id: 'l21',      delay: 600  },
+  { id: 'l22',      delay: 600  },
+  { id: 'l23',      delay: 800,  glitch: true },
+  { id: 's6',       delay: 600  },
+  { id: 'l24',      delay: 500  },
+  { id: 's6b',      delay: 200  },
+  { id: 'l25',      delay: 500  },
+  { id: 'l26',      delay: 400  },
+  { id: 's7',       delay: 400  },
+  { id: 'l27',      delay: 600  },
+  { id: 'l28',      delay: 500  },
+  { id: 's8',       delay: 600  },
+  { id: 'identity', delay: 400,  special: 'identity' },
+  { id: 'statsRow', delay: 600,  special: 'stats' },
+  { id: 'flagBlock',delay: 800,  special: 'flag' },
+];
+
+let total = 0;
+const glitchEl = document.getElementById('glitch');
+
+sequence.forEach(step => {
+  total += step.delay;
+  setTimeout(() => {
+    const el = document.getElementById(step.id);
+    if (!el) return;
+
+    // Glitch flash
+    if (step.glitch) {
+      glitchEl.style.opacity = '1';
+      setTimeout(() => { glitchEl.style.opacity = '0'; }, 80);
+      setTimeout(() => { glitchEl.style.opacity = '0.6'; }, 140);
+      setTimeout(() => { glitchEl.style.opacity = '0'; }, 200);
+    }
+
+    if (step.special === 'identity') {
+      el.classList.add('visible');
+    } else if (step.special === 'stats') {
+      el.classList.add('visible');
+    } else if (step.special === 'flag') {
+      el.classList.add('visible');
+      // Type the flag character by character
+      const flagEl = document.getElementById('flagText');
+      let i = 0;
+      function typeFlag() {
+        if (i <= FLAG.length) {
+          flagEl.textContent = FLAG.slice(0, i);
+          i++;
+          setTimeout(typeFlag, 55);
+        }
+      }
+      setTimeout(typeFlag, 300);
+
+      // Big glitch on flag reveal
+      setTimeout(() => {
+        glitchEl.style.background = 'rgba(160,32,240,0.15)';
+        glitchEl.style.opacity = '1';
+        setTimeout(() => { glitchEl.style.opacity = '0'; glitchEl.style.background = 'rgba(160,32,240,0.08)'; }, 150);
+      }, 200);
+
+    } else {
+      el.style.opacity = '1';
+    }
+
+    // Scroll to bottom smoothly
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+
+  }, total);
+});
+
+</script>
+</body>
+</html>

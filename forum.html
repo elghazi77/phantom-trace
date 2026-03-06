@@ -990,8 +990,8 @@
 
         <!-- USER COL -->
         <div class="user-col">
-          <div class="avatar-wrap">
-            <canvas id="avatarCanvas" width="64" height="64"></canvas>
+         <div class="avatar-wrap">
+            <img src="sp3ct3r_avatar.png" width="64" height="64" style="display:block; image-rendering:pixelated;">
           </div>
           <span class="username">sp3ct3r_</span>
           <span class="user-rank">★ ELITE VENDOR</span>
@@ -1263,81 +1263,7 @@
 // Generate the avatar — looks like noise/static but has structure hidden in it
 // It's a 64x64 canvas filled with purple/dark noise patterns
 // The actual steganography would be applied after with steghide on the exported PNG
-(function() {
-  const canvas = document.getElementById('avatarCanvas');
-  const ctx = canvas.getContext('2d');
-  const W = 64, H = 64;
 
-  // Seed-based pseudo-random for reproducibility
-  let seed = 0x5p3c73r;
-  function rand() {
-    seed ^= seed << 13;
-    seed ^= seed >> 17;
-    seed ^= seed << 5;
-    return (seed >>> 0) / 0xFFFFFFFF;
-  }
-
-  const imageData = ctx.createImageData(W, H);
-  const data = imageData.data;
-
-  // Build a noise field that looks like static but has subtle purple blobs
-  // This makes it look like a corrupted/glitched profile picture
-  for (let y = 0; y < H; y++) {
-    for (let x = 0; x < W; x++) {
-      const i = (y * W + x) * 4;
-      const n = rand();
-      const n2 = rand();
-      const n3 = rand();
-
-      // Distance from center for vignette
-      const dx = (x - 32) / 32;
-      const dy = (y - 32) / 32;
-      const dist = Math.sqrt(dx*dx + dy*dy);
-      const vignette = Math.max(0, 1 - dist * 0.9);
-
-      // Purple noise base
-      const base = n * 40 * vignette;
-      const purpleShift = n2 * 30 * vignette;
-
-      // Occasional bright purple pixels (static look)
-      const spark = n3 > 0.97 ? 120 + n * 80 : 0;
-
-      // Some slightly lighter regions (ghost face shape — very subtle)
-      const faceGlow = (dist < 0.5 && y > 15 && y < 50) ? n2 * 15 : 0;
-
-      data[i]     = Math.min(255, Math.floor(base * 0.4 + spark * 0.6 + faceGlow * 0.2)); // R
-      data[i + 1] = Math.min(255, Math.floor(base * 0.1 + spark * 0.2));                   // G
-      data[i + 2] = Math.min(255, Math.floor(base + purpleShift + spark + faceGlow));       // B
-      data[i + 3] = 255;
-    }
-  }
-
-  ctx.putImageData(imageData, 0, 0);
-
-  // Add a very faint scan line across the face area
-  ctx.strokeStyle = 'rgba(180,80,255,0.06)';
-  ctx.lineWidth = 1;
-  for (let y = 0; y < H; y += 4) {
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(W, y);
-    ctx.stroke();
-  }
-
-  // Subtle crosshair in center (very dim — just enough to feel intentional)
-  ctx.strokeStyle = 'rgba(120,0,200,0.12)';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(32, 20); ctx.lineTo(32, 44); // vertical
-  ctx.moveTo(20, 32); ctx.lineTo(44, 32); // horizontal
-  ctx.stroke();
-
-  // Tiny "eye" glints
-  ctx.fillStyle = 'rgba(180,100,255,0.35)';
-  ctx.fillRect(23, 26, 2, 2);
-  ctx.fillRect(39, 26, 2, 2);
-
-})();
 </script>
 
 </body>
